@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="light" />
+<title>Daily Fortune Cookie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: #f6f5f1;
+    color: #2c2a26;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .fc-outer {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 3rem;
+  }
+
+  .fc-date {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b665d;
+    margin-bottom: 2.6rem;
+  }
+
+  .stage {
+    position: relative;
+    width: 240px;
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cookie-closed {
+    font-size: 110px;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.18s ease;
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,0.12));
+    transform-origin: center 60%;
+  }
+  .cookie-closed:hover { transform: scale(1.06); }
+
+  .half {
+    position: absolute;
+    top: 50%; left: 50%;
+    font-size: 110px;
+    line-height: 1;
+    width: 110px; height: 120px;
+    margin-left: -55px; margin-top: -60px;
+    text-align: center;
+    user-select: none;
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,0.12));
+    opacity: 0;
+  }
+  .half-left  { clip-path: inset(0 50% 0 0); }
+  .half-right { clip-path: inset(0 0 0 50%); }
+
+  .crumb {
+    position: absolute;
+    top: 50%; left: 50%;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  .hint {
+    font-size: 13px;
+    color: #9a958b;
+    letter-spacing: 0.02em;
+    margin-top: 1.3rem;
+    animation: blink 2.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:0.45} 50%{opacity:1} }
+
+  .result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .result.show { opacity: 1; transform: translateY(0); }
+
+  .fortune-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #9a958b;
+    margin-bottom: 0.7rem;
+    text-align: center;
+  }
+  .fortune-date {
+    font-size: 15px;
+    font-weight: 500;
+    color: #6b665d;
+    margin-bottom: 1.3rem;
+    text-align: center;
+  }
+
+  .quote-card {
+    background: #ffffff;
+    border: 1px solid #e7e3da;
+    border-radius: 16px;
+    padding: 2rem 2.2rem 1.7rem;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 1.3rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .music { font-size: 18px; color: #9a958b; display: block; margin-bottom: 0.9rem; }
+  .q-text {
+    font-family: 'Lora', Georgia, serif;
+    font-size: 18px;
+    font-style: italic;
+    line-height: 1.7;
+    color: #2c2a26;
+    margin-bottom: 1.2rem;
+  }
+  .q-song { font-size: 14px; font-weight: 500; color: #2c2a26; margin-bottom: 3px; }
+  .q-meta { font-size: 13px; color: #6b665d; }
+
+  .lucky {
+    margin-top: 1.4rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid #e7e3da;
+  }
+  .lucky-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #9a958b;
+    margin-bottom: 0.7rem;
+  }
+  .lucky-nums {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .lucky-num {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: #faf6ec;
+    border: 1px solid #ece2c8;
+    color: #b8842c;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .controls {
+    display: flex;
+    gap: 1.4rem;
+    align-items: center;
+  }
+  .linkbtn {
+    background: none;
+    border: none;
+    border-bottom: 1px solid #e7e3da;
+    padding-bottom: 1px;
+    font-size: 13px;
+    color: #9a958b;
+    cursor: pointer;
+    transition: color 0.15s;
+    font-family: inherit;
+  }
+  .linkbtn:hover { color: #6b665d; }
+
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); border: 0;
+  }
+</style>
+</head>
+<body>
+<div class="fc-outer" id="app">
+  <h1 class="sr-only">Daily fortune cookie</h1>
+</div>
+
+<script>
+  const QUOTES = [
+    { text: "Don't stop believin', hold on to the feelin' — there's a whole life waiting out there if you're brave enough to chase the light.", song: "Don't Stop Believin'", artist: "Journey", year: "1981" },
+    { text: "We found love in a hopeless place — beauty isn't in the perfect conditions, it's in choosing to see the light when everything around you is dark.", song: "We Found Love", artist: "Rihanna", year: "2011" },
+    { text: "What doesn't kill you makes you stronger, stand a little taller — every scar is evidence that you survived something that tried to stop you.", song: "Stronger", artist: "Kelly Clarkson", year: "2011" },
+    { text: "I was born this way — the most radical act of courage is simply to exist as exactly who you are, without apology and without permission.", song: "Born This Way", artist: "Lady Gaga", year: "2011" },
+    { text: "You may say I'm a dreamer, but I'm not the only one — imagine there are enough of us, and the world we dream of quietly becomes the one we live in.", song: "Imagine", artist: "John Lennon", year: "1971" },
+    { text: "Every little thing is gonna be alright — not because life gets easier, but because you carry more than you think you do.", song: "Three Little Birds", artist: "Bob Marley", year: "1977" },
+    { text: "I will survive — and not just survive, but come out the other side knowing exactly how much you're capable of.", song: "I Will Survive", artist: "Gloria Gaynor", year: "1978" },
+    { text: "Here comes the sun, and I say it's alright — no winter is forever, and the light always returns to the places patient enough to wait.", song: "Here Comes the Sun", artist: "The Beatles", year: "1969" },
+    { text: "Life's what you make it, so let's make it rock — the whole shape of your story is still in your hands.", song: "Life's What You Make It", artist: "Hannah Montana", year: "2005" },
+    { text: "Shake it off — your critics will move on, but the time you spend worrying about them is time you could spend becoming harder to ignore.", song: "Shake It Off", artist: "Taylor Swift", year: "2014" },
+    { text: "I am titanium — the things that were meant to break you have instead been forging something that cannot be touched.", song: "Titanium", artist: "David Guetta ft. Sia", year: "2011" },
+    { text: "Man in the Mirror — if you want the world to be different, the most honest place to start is with the one person you have full jurisdiction over.", song: "Man in the Mirror", artist: "Michael Jackson", year: "1988" },
+    { text: "Rise up — and again, and again, even when the getting up is the hardest part and no one is there to see it.", song: "Rise Up", artist: "Andra Day", year: "2015" },
+    { text: "Unwritten — the pen is still in your hand, the page is still blank, and it is never as late as the voice in your head insists.", song: "Unwritten", artist: "Natasha Bedingfield", year: "2004" },
+    { text: "Ain't no mountain high enough — the obstacles in your way shrink dramatically when what you're chasing actually matters.", song: "Ain't No Mountain High Enough", artist: "Marvin Gaye & Tammi Terrell", year: "1967" },
+    { text: "Fight song — reclaim your life; even a small, private act of courage is still a battle won.", song: "Fight Song", artist: "Rachel Platten", year: "2015" },
+    { text: "Keep your head up — the weight of a hard season is real, but it is not the whole story, and the next chapter is closer than it feels.", song: "Keep Your Head Up", artist: "Ben Howard", year: "2011" },
+    { text: "Go your own way — there is no map for the life that is specifically yours, so stop looking for one and start walking.", song: "Go Your Own Way", artist: "Fleetwood Mac", year: "1977" },
+    { text: "Beautiful day, don't let it get away — gratitude is about noticing the real things that are good, not pretending everything is perfect.", song: "Beautiful Day", artist: "U2", year: "2000" },
+    { text: "Try everything — failure isn't the opposite of success, it's the path to it, and every attempt counts even when it lands sideways.", song: "Try Everything", artist: "Shakira", year: "2016" },
+    { text: "How far I'll go — there is a version of you that has not yet reached their edge, and you owe it to yourself to find out where it is.", song: "How Far I'll Go", artist: "Auli'i Cravalho / Moana", year: "2016" },
+    { text: "Don't give up, you have friends — you are not carrying any of this alone, because the people who love you are still there.", song: "Don't Give Up", artist: "Peter Gabriel & Kate Bush", year: "1986" },
+    { text: "You're gonna make it after all — not just barely, but with your hat tossed joyfully into the sky.", song: "Love Is All Around", artist: "Mary Tyler Moore Theme", year: "1970" },
+    { text: "Wise men say only fools rush in — sometimes the bravest thing you can do is slow down and let something truly matter to you.", song: "Can't Help Falling in Love", artist: "Elvis Presley", year: "1961" }
+  ];
+
+  function getToday() { const d = new Date(); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
+  function formatDate() { return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }); }
+  function getUserSeed() {
+    let s = localStorage.getItem('fc_seed');
+    if (!s) { s = Math.random().toString(36).slice(2, 10); localStorage.setItem('fc_seed', s); }
+    return s;
+  }
+  function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = Math.imul(31, h) + s.charCodeAt(i) | 0; return Math.abs(h); }
+  function getDailyQuote() { return QUOTES[hashStr(getUserSeed() + getToday()) % QUOTES.length]; }
+  function getStoredIdx() {
+    const r = localStorage.getItem('fc_opened');
+    if (!r) return null;
+    try { const { date, idx } = JSON.parse(r); return date === getToday() ? idx : null; }
+    catch (e) { return null; }
+  }
+  function storeOpened(idx) { localStorage.setItem('fc_opened', JSON.stringify({ date: getToday(), idx })); }
+
+  function luckyFrom(seedStr) {
+    let n = hashStr(seedStr) || 1;
+    const nums = new Set();
+    while (nums.size < 6) {
+      n = (Math.imul(n, 1103515245) + 12345) & 0x7fffffff;
+      nums.add((n % 69) + 1);
+    }
+    return [...nums].sort((a, b) => a - b);
+  }
+
+  const app = document.getElementById('app');
+  const COOKIE = '\uD83E\uDD60';
+
+  function spawnCrumbs(stage) {
+    const colors = ['#E8C070','#D4954A','#C07A28','#f0d080','#b8842c','#e0b060'];
+    for (let i = 0; i < 16; i++) {
+      const c = document.createElement('div');
+      c.className = 'crumb';
+      const size = 3 + Math.random() * 6;
+      c.style.width = size + 'px';
+      c.style.height = size + 'px';
+      c.style.background = colors[i % colors.length];
+      stage.appendChild(c);
+      const angle = (i / 16) * Math.PI * 2 + Math.random() * 0.5;
+      const dist = 50 + Math.random() * 55;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist + 40;
+      c.animate([
+        { transform: 'translate(-50%,-50%) scale(1)', opacity: 0.95 },
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0)`, opacity: 0 }
+      ], { duration: 600, delay: i * 12, easing: 'cubic-bezier(0.2,0.6,0.4,1)', fill: 'forwards' });
+    }
+  }
+
+  function luckyHTML(nums) {
+    return `<div class="lucky">
+      <div class="lucky-label">Lucky Numbers</div>
+      <div class="lucky-nums">${nums.map(n => `<div class="lucky-num">${n}</div>`).join('')}</div>
+    </div>`;
+  }
+
+  function cardHTML(q, nums) {
+    return `
+      <div class="fortune-label">Today's Fortune</div>
+      <div class="fortune-date">${formatDate()}</div>
+      <div class="quote-card">
+        <span class="music">&#9833;</span>
+        <p class="q-text">"${q.text}"</p>
+        <p class="q-song">— ${q.song}</p>
+        <p class="q-meta">${q.artist}, ${q.year}</p>
+        ${luckyHTML(nums)}
+      </div>
+      <div class="controls">
+        <button class="linkbtn" id="replayBtn">replay animation</button>
+        <button class="linkbtn" id="testBtn">test: new fortune</button>
+      </div>`;
+  }
+
+  function wireControls(currentQ, currentNums) {
+    document.getElementById('replayBtn').addEventListener('click', () => playFor(currentQ, currentNums, false));
+    document.getElementById('testBtn').addEventListener('click', () => {
+      let idx = Math.floor(Math.random() * QUOTES.length);
+      if (QUOTES[idx] === currentQ && QUOTES.length > 1) idx = (idx + 1) % QUOTES.length;
+      const q = QUOTES[idx];
+      const nums = luckyFrom('test' + Date.now() + idx);
+      playFor(q, nums, false);
+    });
+  }
+
+  function showStatic(q, nums) {
+    app.innerHTML = `
+      <div class="stage">
+        <div class="half half-left" style="opacity:1;transform:translateX(-44px) translateY(8px) rotate(-26deg)">${COOKIE}</div>
+        <div class="half half-right" style="opacity:1;transform:translateX(44px) translateY(8px) rotate(24deg)">${COOKIE}</div>
+      </div>
+      <div class="result show">${cardHTML(q, nums)}</div>`;
+    wireControls(q, nums);
+  }
+
+  function playFor(q, nums, storeToday) {
+    if (storeToday) storeOpened(QUOTES.indexOf(q));
+
+    app.innerHTML = `
+      <div class="fc-date">${formatDate()}</div>
+      <div class="stage" id="stage">
+        <div class="cookie-closed" id="cookieClosed">${COOKIE}</div>
+      </div>
+      <div class="hint">click the cookie for today's anthem</div>
+      <div class="result" id="result" style="display:none"></div>`;
+
+    // pre-build the result so it's ready to fade in
+    const result = document.getElementById('result');
+    result.style.display = 'flex';
+    result.innerHTML = cardHTML(q, nums);
+    wireControls(q, nums);
+
+    const stage = document.getElementById('stage');
+    const closed = document.getElementById('cookieClosed');
+
+    // bend + tension + sharp snap animation
+    closed.animate([
+      { transform: 'rotate(0deg) scale(1)', offset: 0 },
+      { transform: 'rotate(-3.5deg) scale(1.02,0.99)', offset: 0.12 },
+      { transform: 'rotate(3.5deg) scale(1.02,0.99)', offset: 0.24 },
+      { transform: 'rotate(-5deg) scale(1.03,0.98)', offset: 0.36 },
+      { transform: 'rotate(4.5deg) scale(1.03,0.98)', offset: 0.46 },
+      { transform: 'rotate(-1deg) scale(0.9,1.13)', offset: 0.58 },
+      { transform: 'rotate(0deg) scale(1.22,0.8)', offset: 0.7 },
+      { transform: 'scale(1.05,0.97)', offset: 0.84 },
+      { transform: 'scale(1)', offset: 1 }
+    ], { duration: 720, easing: 'ease-in-out' });
+
+    // snap fires at ~70% of animation = ~500ms
+    setTimeout(() => {
+      closed.style.display = 'none';
+      document.querySelector('.hint').style.display = 'none';
+      spawnCrumbs(stage);
+
+      const hl = document.createElement('div');
+      hl.className = 'half half-left';
+      hl.textContent = COOKIE;
+      const hr = document.createElement('div');
+      hr.className = 'half half-right';
+      hr.textContent = COOKIE;
+      stage.appendChild(hl);
+      stage.appendChild(hr);
+
+      hl.style.transition = 'transform 0.62s cubic-bezier(0.34,1.4,0.55,1), opacity 0.22s ease';
+      hr.style.transition = 'transform 0.62s cubic-bezier(0.34,1.4,0.55,1), opacity 0.22s ease';
+
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        hl.style.opacity = '1';
+        hr.style.opacity = '1';
+        hl.style.transform = 'translateX(-44px) translateY(8px) rotate(-26deg)';
+        hr.style.transform = 'translateX(44px) translateY(8px) rotate(24deg)';
+      }));
+
+      setTimeout(() => { result.classList.add('show'); }, 430);
+    }, 500);
+  }
+
+  function start() {
+    const storedIdx = getStoredIdx();
+    if (storedIdx !== null) {
+      const q = QUOTES[storedIdx];
+      const nums = luckyFrom(getUserSeed() + getToday() + 'lucky' + storedIdx);
+      showStatic(q, nums);
+      return;
+    }
+
+    app.innerHTML = `
+      <div class="fc-date">${formatDate()}</div>
+      <div class="stage" id="stage">
+        <div class="cookie-closed" id="cookieClosed" role="button" tabindex="0" aria-label="Click to crack open your fortune cookie">${COOKIE}</div>
+      </div>
+      <div class="hint">click the cookie for today's anthem</div>`;
+
+    function doCrack() {
+      document.getElementById('cookieClosed').onclick = null;
+      const q = getDailyQuote();
+      const idx = QUOTES.indexOf(q);
+      const nums = luckyFrom(getUserSeed() + getToday() + 'lucky' + idx);
+      playFor(q, nums, true);
+    }
+    document.getElementById('cookieClosed').addEventListener('click', doCrack);
+    document.getElementById('cookieClosed').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') doCrack(); });
+  }
+
+  start();
+</script>
+</body>
+</html>
