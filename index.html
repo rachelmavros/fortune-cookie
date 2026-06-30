@@ -26,7 +26,7 @@
     align-items: center;
     justify-content: flex-start;
     min-height: 100vh;
-    padding: 2rem 1rem;
+    padding: 2rem 1rem 3.5rem;
   }
   #footer {
     width: 100%;
@@ -34,6 +34,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    padding-bottom: 2.5rem;
   }
 
   .fc-outer {
@@ -365,6 +366,7 @@
       </div>
       <div class="result show">${cardHTML(q, nums)}</div>`;
     wireControls(q, nums);
+    revealFooter();
   }
 
   function playFor(q, nums, storeToday) {
@@ -425,7 +427,7 @@
         hr.style.transform = 'translateX(44px) translateY(8px) rotate(24deg)';
       }));
 
-      setTimeout(() => { result.classList.add('show'); }, 430);
+      setTimeout(() => { result.classList.add('show'); revealFooter(); }, 430);
     }, 500);
   }
 
@@ -455,8 +457,6 @@
     document.getElementById('cookieClosed').addEventListener('click', doCrack);
     document.getElementById('cookieClosed').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') doCrack(); });
   }
-
-  start();
 
   // ── Push notifications ──────────────────────────────────────────────────
   const VAPID_PUBLIC_KEY = 'BCbwFO8lD6wRjKxyqRcOgrhi91XlvZalxbMawMe9C_j_uGdBhfymapUbZ4D5OrECBhh_E-C0p0wj_rYfsxd1ENk';
@@ -577,7 +577,7 @@
     if (isIOS()) {
       // iOS has no install API — show the manual steps on tap
       msg.style.display = 'none';
-      msg.innerHTML = 'Tap the <strong>Share</strong> icon (the square with an up-arrow) at the bottom of Safari, then choose <strong>“Add to Home Screen.”</strong>';
+      msg.innerHTML = 'Tap the <strong>Share</strong> button in the address bar at the top (the square with an up-arrow ⬆️), then scroll down and choose <strong>“Add to Home Screen.”</strong>';
       btn.addEventListener('click', () => {
         msg.style.display = msg.style.display === 'none' ? 'block' : 'none';
       });
@@ -603,14 +603,23 @@
     document.getElementById('footer').appendChild(bar);
   }
 
-  renderInstallBar();
-
-  // Register service worker + show notify bar
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').then(() => {
-      renderNotifyBar();
-    }).catch(err => console.error('SW registration failed:', err));
+  // The footer buttons appear only AFTER the fortune is opened.
+  // Called from showStatic() (returning visitor) and from the crack reveal.
+  let footerRevealed = false;
+  function revealFooter() {
+    if (footerRevealed) return;
+    footerRevealed = true;
+    renderInstallBar();
+    renderNotifyBar();
   }
+
+  // Register the service worker on load so notifications are ready when needed.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .catch(err => console.error('SW registration failed:', err));
+  }
+
+  start();
 </script>
 </body>
 </html>
