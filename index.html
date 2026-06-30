@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="color-scheme" content="light" />
 <title>Daily Fortune Cookie</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#f6f5f1" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Fortune" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -16,10 +22,18 @@
     color: #2c2a26;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     display: flex;
-    align-items: flex-start;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
     min-height: 100vh;
     padding: 2rem 1rem;
+  }
+  #footer {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .fc-outer {
@@ -227,6 +241,7 @@
 <div class="fc-outer" id="app">
   <h1 class="sr-only">Daily fortune cookie</h1>
 </div>
+<div id="footer"></div>
 
 <script>
   const QUOTES = [
@@ -480,7 +495,7 @@
 
     bar.appendChild(btn);
     bar.appendChild(msg);
-    document.getElementById('app').appendChild(bar);
+    document.getElementById('footer').appendChild(bar);
 
     // Check current state
     navigator.serviceWorker.ready.then(reg => {
@@ -521,6 +536,74 @@
       }
     });
   }
+
+  // ── Add to Home Screen ──────────────────────────────────────────────────
+  let deferredInstallPrompt = null;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+  function isIOS() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+
+  // Android/desktop Chrome fires this when the app is installable
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    const b = document.getElementById('installBtn');
+    if (b) b.style.display = 'inline-block';
+  });
+
+  window.addEventListener('appinstalled', () => {
+    const bar = document.getElementById('installBar');
+    if (bar) bar.remove();
+  });
+
+  function renderInstallBar() {
+    if (isStandalone) return; // already running as an installed app
+
+    const bar = document.createElement('div');
+    bar.className = 'notify-bar';
+    bar.id = 'installBar';
+
+    const btn = document.createElement('button');
+    btn.className = 'notify-btn';
+    btn.id = 'installBtn';
+    btn.textContent = '📲 Add to Home Screen';
+
+    const msg = document.createElement('div');
+    msg.className = 'notify-msg';
+
+    if (isIOS()) {
+      // iOS has no install API — show the manual steps on tap
+      msg.style.display = 'none';
+      msg.innerHTML = 'Tap the <strong>Share</strong> icon (the square with an up-arrow) at the bottom of Safari, then choose <strong>“Add to Home Screen.”</strong>';
+      btn.addEventListener('click', () => {
+        msg.style.display = msg.style.display === 'none' ? 'block' : 'none';
+      });
+    } else {
+      // Hidden until the browser says it's installable
+      btn.style.display = deferredInstallPrompt ? 'inline-block' : 'none';
+      btn.addEventListener('click', async () => {
+        if (!deferredInstallPrompt) return;
+        deferredInstallPrompt.prompt();
+        const { outcome } = await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+        if (outcome === 'accepted') {
+          btn.textContent = '✅ Added to your home screen';
+          btn.disabled = true;
+        } else {
+          btn.style.display = 'none';
+        }
+      });
+    }
+
+    bar.appendChild(btn);
+    bar.appendChild(msg);
+    document.getElementById('footer').appendChild(bar);
+  }
+
+  renderInstallBar();
 
   // Register service worker + show notify bar
   if ('serviceWorker' in navigator) {
