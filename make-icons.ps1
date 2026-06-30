@@ -33,25 +33,39 @@ function New-Icon([int]$S, [string]$path) {
   $pen.LineJoin = 'Round'; $pen.StartCap = 'Round'; $pen.EndCap = 'Round'
   $penThin = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(150, 110, 40), (2.0 * $sc))
 
-  # ---- fortune slip poking up from the fold (drawn first, behind cookie top) ----
+  # ---- short fortune slip, tilted, poking from the top of the fold (behind cookie) ----
   $slip = New-Object System.Drawing.Drawing2D.GraphicsPath
-  $slip.AddPolygon(@((P 45 40), (P 57 37), (P 61 12), (P 49 15)))
+  $slip.AddPolygon(@((P 47 41), (P 57 38), (P 62 22), (P 51 25)))
   $g.FillPath((New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(255, 255, 253, 247))), $slip)
   $g.DrawPath((New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(120, 110, 40), (1.6 * $sc))), $slip)
-  $g.DrawLine((New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(90, 120, 60), (1.4 * $sc))), (P 50 20), (P 57 18))
+  $g.DrawLine((New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(90, 120, 60), (1.4 * $sc))), (P 52 30), (P 59 28))
 
-  # ---- folded cookie = two overlapping lobes (peanut shape) ----
-  # left lobe
-  $g.FillEllipse($tan, (12 * $sc), (34 * $sc), (46 * $sc), (46 * $sc))
-  # right lobe
-  $g.FillEllipse($tan, (42 * $sc), (34 * $sc), (46 * $sc), (46 * $sc))
-  # outline each lobe -> the crossing arcs form the central fold/seam
-  $g.DrawEllipse($pen, (12 * $sc), (34 * $sc), (46 * $sc), (46 * $sc))
-  $g.DrawEllipse($pen, (42 * $sc), (34 * $sc), (46 * $sc), (46 * $sc))
+  # ---- folded cookie body: a single domed "taco" mound (round belly, folded top) ----
+  $cookie = New-Object System.Drawing.Drawing2D.GraphicsPath
+  # domed top ridge: left tip -> right tip (convex up)
+  $cookie.AddBezier((P 18 46), (P 28 34), (P 72 34), (P 82 46))
+  # right tip -> rounded bottom center
+  $cookie.AddBezier((P 82 46), (P 82 68), (P 66 80), (P 50 80))
+  # bottom center -> left tip
+  $cookie.AddBezier((P 50 80), (P 34 80), (P 18 68), (P 18 46))
+  $cookie.CloseFigure()
+  $g.FillPath($tan, $cookie)
+  $g.DrawPath($pen, $cookie)
 
-  # little crease lines on each lobe
-  $g.DrawArc($penThin, (20 * $sc), (44 * $sc), (20 * $sc), (26 * $sc), 110, 140)
-  $g.DrawArc($penThin, (60 * $sc), (44 * $sc), (20 * $sc), (26 * $sc), 290, 140)
+  # horizontal fold ridge just under the top edge (the doubled-over fold)
+  $fold = New-Object System.Drawing.Drawing2D.GraphicsPath
+  $fold.AddBezier((P 25 49), (P 38 41), (P 62 41), (P 75 49))
+  $g.DrawPath($penThin, $fold)
+
+  # fan of shell creases on the belly (what makes it read as a fortune cookie)
+  $fan = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(120, 110, 40), (1.7 * $sc))
+  $fan.StartCap = 'Round'; $fan.EndCap = 'Round'
+  $c1 = New-Object System.Drawing.Drawing2D.GraphicsPath
+  $c1.AddBezier((P 50 52), (P 41 60), (P 37 68), (P 35 74)); $g.DrawPath($fan, $c1)
+  $c2 = New-Object System.Drawing.Drawing2D.GraphicsPath
+  $c2.AddBezier((P 50 52), (P 50 62), (P 50 70), (P 50 77)); $g.DrawPath($fan, $c2)
+  $c3 = New-Object System.Drawing.Drawing2D.GraphicsPath
+  $c3.AddBezier((P 50 52), (P 59 60), (P 63 68), (P 65 74)); $g.DrawPath($fan, $c3)
 
   $bmp.Save($path, [System.Drawing.Imaging.ImageFormat]::Png)
   $g.Dispose(); $bmp.Dispose()
